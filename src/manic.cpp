@@ -177,7 +177,8 @@ static void page_loading(void *data, Evas_Object *obj, void *event_info)
 static void page_url_changed(void *data, Evas_Object *obj, void *event_info)
 {
     int x,y,w,h;
-    evas_object_geometry_get(mainscroll,&x,&y,&w,&h);
+    edje_object_part_text_cursor_geometry_get(mainscroll,"bg",&x,&y,&w,&h);
+    //evas_object_geometry_get(mainscroll,&x,&y,&w,&h);
     evas_object_resize(pagelayout,w,h);
     elm_entry_entry_set(address_entry,get_cur_url());
     
