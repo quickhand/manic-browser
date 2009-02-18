@@ -197,7 +197,7 @@ EAPI int
 elm_main(int argc, char **argv)
 {
    etk_init(argc,argv);
-   Evas_Object *bx, *bx2, *bt;
+   Evas_Object *bx, *bx2, *bt,*icon;
    
    /* new window - do the usual and give it a name, title and delete handler */
    win = elm_win_add(NULL, "dialog", ELM_WIN_BASIC);
@@ -238,32 +238,51 @@ elm_main(int argc, char **argv)
    
    /* add buttons to control box */
    
+   icon=elm_icon_add(win);
+   elm_icon_standard_set(icon,"arrow_left");
+   evas_object_show(icon);
+   
    bt = elm_button_add(win);
-   elm_button_label_set(bt, "B");
+   elm_button_icon_set(bt,icon);
    evas_object_size_hint_weight_set(bt,0.0,0.0);
    //evas_object_size_hint_align_set(bt, -1.0, -1.0);
    elm_box_pack_end(bx2, bt);
    evas_object_smart_callback_add(bt,"clicked",back_bt_clicked, NULL);
    evas_object_show(bt);
-
+   
+   icon=elm_icon_add(win);
+   //elm_icon_file_set(icon,themefile,"elm/icon/arrow_left/default");
+   elm_icon_standard_set(icon,"arrow_right");
+   evas_object_show(icon);
+   
    bt = elm_button_add(win);
-   elm_button_label_set(bt, "F");
+   elm_button_icon_set(bt,icon);
    evas_object_size_hint_weight_set(bt,0.0,0.0);
    //evas_object_size_hint_align_set(bt, -1.0, -1.0);
    elm_box_pack_end(bx2, bt);
    evas_object_smart_callback_add(bt,"clicked",forward_bt_clicked, NULL);
    evas_object_show(bt);
    
+   icon=elm_icon_add(win);
+   //elm_icon_file_set(icon,themefile,"elm/icon/arrow_left/default");
+   elm_icon_standard_set(icon,"clock");
+   evas_object_show(icon);
+   
    bt = elm_button_add(win);
-   elm_button_label_set(bt, "R");
+   elm_button_icon_set(bt,icon);
    evas_object_size_hint_weight_set(bt, 0.0, 0.0);
    //evas_object_size_hint_align_set(bt, -1.0, -1.0);
    elm_box_pack_end(bx2, bt);
    evas_object_smart_callback_add(bt,"clicked",reload_bt_clicked, NULL);
    evas_object_show(bt);
    
+   icon=elm_icon_add(win);
+   //elm_icon_file_set(icon,themefile,"elm/icon/arrow_left/default");
+   elm_icon_standard_set(icon,"close");
+   evas_object_show(icon);
+   
    bt = elm_button_add(win);
-   elm_button_label_set(bt, "S");
+   elm_button_icon_set(bt,icon);
    evas_object_size_hint_weight_set(bt, 0.0, 0.0);
    //evas_object_size_hint_align_set(bt, -1.0, -1.0);
    elm_box_pack_end(bx2, bt);
