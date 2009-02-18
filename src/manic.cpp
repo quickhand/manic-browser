@@ -35,14 +35,15 @@
 #include <Edje.h>
 #include <Elementary.h>
 #include <EWebKit.h>
-
+#include <Etk.h>
 #define REL_THEME "themes/themes_oitheme.edj"
 
 using namespace std;
 
 
 Evas *evas;
-Evas_Object *win, *bg, *mainscroll,*pagelayout,*webkitobj,*address_entry;
+Evas_Object *win, *bg, *mainscroll,*pagelayout,*webkitobj,*addressentry_embed;
+Etk_Widget *addressentry,*embed;
 /* return value of app - keep it here so we can modify it */
 static int retval = -1;
 static unsigned char mouseclicked=0;
@@ -88,12 +89,11 @@ win_del(void *data, Evas_Object *obj, void *event_info)
    elm_exit();
 }
 
-static void address_entry_activated(void *data, Evas_Object *obj, void *event_info)
+static void addressentry_activated(void *data)
 {
-    char *entrytxt=strdup(elm_entry_entry_get(address_entry));
-    ewk_webview_object_load_url(webkitobj,strtok(entrytxt,"<"));
+    const char *entrytxt=etk_entry_text_get(ETK_ENTRY(addressentry));
+    ewk_webview_object_load_url(webkitobj,entrytxt);
     
-    free(entrytxt);
 }
 static void back_bt_clicked(void *data, Evas_Object *obj, void *event_info)
 {
@@ -176,12 +176,19 @@ static void page_loading(void *data, Evas_Object *obj, void *event_info)
 
 static void page_url_changed(void *data, Evas_Object *obj, void *event_info)
 {
-    int x,y,w,h;
-    edje_object_part_text_cursor_geometry_get(mainscroll,"bg",&x,&y,&w,&h);
+    //int partx,party,partw,parth;
+    //edje_object_part_text_cursor_geometry_get(mainscroll,"bg",&partx,&party,&partw,&parth);
     //evas_object_geometry_get(mainscroll,&x,&y,&w,&h);
-    evas_object_resize(pagelayout,w,h);
-    elm_entry_entry_set(address_entry,get_cur_url());
-    
+    //evas_object_resize(pagelayout,1,1);
+    //elm_entry_entry_set(address_entry,get_cur_url());
+    int scrx,scry,scrw,scrh;
+    evas_object_geometry_get(mainscroll,&scrx,&scry,&scrw,&scrh);
+    Evas_Object *webpage=ewk_webview_object_webpage_get(webkitobj);
+    if(webpage!=NULL)
+        ewk_webpage_object_viewport_size_set(webpage,scrw,scrh);
+    elm_scroller_region_show(mainscroll,0,0,scrx,scrh);
+    etk_entry_text_set(ETK_ENTRY(addressentry),get_cur_url());
+    content_resize();
 }
 
 
@@ -189,6 +196,7 @@ static void page_url_changed(void *data, Evas_Object *obj, void *event_info)
 EAPI int
 elm_main(int argc, char **argv)
 {
+   etk_init(argc,argv);
    Evas_Object *bx, *bx2, *bt;
    
    /* new window - do the usual and give it a name, title and delete handler */
@@ -262,22 +270,30 @@ elm_main(int argc, char **argv)
    evas_object_smart_callback_add(bt,"clicked",stop_bt_clicked, NULL);
    evas_object_show(bt);
    
-   Evas_Object *entry_frame=elm_frame_add(win);
-   evas_object_size_hint_weight_set(entry_frame, 1.0, 1.0);
-   evas_object_size_hint_align_set(entry_frame, -1.0, -1.0);
-   elm_frame_style_set(entry_frame,"default");
-   elm_box_pack_end(bx2, entry_frame);
+   //Set up address bar
+   Evas_Object *addlayout=elm_layout_add(win);
+   elm_layout_file_set(addlayout,themefile,"addlayout");
+   evas_object_size_hint_weight_set(addlayout, 1.0, 1.0);
+   elm_box_pack_end(bx2,addlayout);
+   evas_object_show(addlayout);
    
-   address_entry=elm_entry_add(win);
-   elm_entry_single_line_set(address_entry,TRUE);
-   evas_object_size_hint_weight_set(address_entry, 0.0, 1.0);
-   evas_object_size_hint_align_set(address_entry, -1.0, 1.0);
-   elm_entry_entry_set(address_entry,"http://www.openinkpot.org");
-   evas_object_smart_callback_add(address_entry, "activated", address_entry_activated, NULL);
-   elm_frame_content_set(entry_frame,address_entry);
-   evas_object_show(address_entry);
-   evas_object_show(entry_frame);
-   
+    
+    
+    //Create the embed widget
+    
+    embed = etk_embed_new(evas);
+    
+    //Pack an entry widget into the embed widget
+    addressentry = etk_entry_new();
+    etk_entry_text_set(ETK_ENTRY(addressentry),"http://openinkpot.org");
+    etk_container_add(ETK_CONTAINER(embed),addressentry);
+    etk_signal_connect_by_code(ETK_ENTRY_TEXT_ACTIVATED_SIGNAL,ETK_OBJECT(addressentry),ETK_CALLBACK(addressentry_activated),NULL);
+    etk_widget_show_all(embed);
+
+    
+    addressentry_embed = etk_embed_object_get(ETK_EMBED(embed));
+    elm_layout_content_set(addlayout,"addlayout/swallow",addressentry_embed);
+    evas_object_show(addressentry_embed);
    
    /* add scroller that will house main content */
    
@@ -318,6 +334,10 @@ elm_main(int argc, char **argv)
    
    evas_object_show(webkitobj);
    
+   
+    Evas_Object *webpage=ewk_webview_object_webpage_get(webkitobj);
+    if(webpage!=NULL)
+        ewk_webpage_object_viewport_size_set(webpage,scrw,scrh);
    /* show the window */
    evas_object_show(win);
 
@@ -326,6 +346,7 @@ elm_main(int argc, char **argv)
    elm_run();
    elm_shutdown();
    ewk_shutdown();
+   etk_shutdown();
    return 0;
 }
 ELM_MAIN()
